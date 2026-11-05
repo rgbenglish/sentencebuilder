@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cümle Kur: lego oyunu (A1–A2)</title>
+<style>
+:root{--bg:#fff;--fg:#1f1f1d;--mu:#6b6a65;--bd:#d9d7cf;--cd:#f6f5f0;--ok:#3B6D11;--no:#A32D2D;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1f1e1c;--fg:#f1efe8;--mu:#a8a69d;--bd:#3d3c38;--cd:#2a2926;--ok:#97C459;--no:#F09595}}
+:root[data-theme="dark"]{--bg:#1f1e1c;--fg:#f1efe8;--mu:#a8a69d;--bd:#3d3c38;--cd:#2a2926;--ok:#97C459;--no:#F09595}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0 auto;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:16px;max-width:760px}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+.mu{color:var(--mu);font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 14px}
+button{font:inherit;font-size:14px;border:1px solid var(--bd);background:var(--bg);color:var(--fg);padding:6px 14px;border-radius:16px;cursor:pointer}
+button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button.go{background:var(--ok);color:#fff;border-color:var(--ok);font-weight:500;padding:9px 20px;border-radius:10px}
+button:disabled{opacity:.4;cursor:default}
+.hd{display:flex;justify-content:space-between;font-size:14px;margin-bottom:10px;gap:8px;flex-wrap:wrap}
+.hd b{font-weight:500}
+.bar{height:6px;background:var(--cd);border-radius:3px;margin-bottom:14px;overflow:hidden}
+.bar div{height:100%;background:var(--ok);transition:width .3s}
+.zone{background:var(--cd);border:1.5px dashed var(--bd);border-radius:12px;padding:12px 10px 10px;min-height:68px;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;margin-bottom:12px}
+.zone .ph{color:var(--mu);font-size:14px;align-self:center}
+.pool{display:flex;flex-wrap:wrap;gap:8px;padding:10px 0 4px;min-height:56px;margin-bottom:12px}
+.b{position:relative;margin-top:6px;background:var(--c);color:#fff;border:2px solid var(--c);border-radius:6px;padding:7px 12px 8px;font-size:16px;font-weight:500;text-align:center;min-width:48px}
+.b i{display:block;font-style:normal;font-size:11px;font-weight:400;opacity:.9}
+.b::before{content:"";position:absolute;top:-8px;left:9px;width:9px;height:6px;border-radius:3px 3px 0 0;background:var(--c);box-shadow:17px 0 0 var(--c)}
+.nl .b i{display:none}
+.b.ok{border-color:var(--ok);box-shadow:0 0 0 3px var(--ok)}
+.b.no{border-color:var(--no);box-shadow:0 0 0 3px var(--no)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.msg{min-height:48px;font-size:15px;padding:10px 12px;border-radius:10px;background:var(--cd)}
+.msg.good{color:var(--ok)}.msg.bad{color:var(--no)}
+.big{font-size:34px;font-weight:500;margin:10px 0}
+.hide{display:none}
+textarea{width:100%;box-sizing:border-box;font:13px/1.55 ui-monospace,Menlo,Consolas,monospace;background:var(--cd);color:var(--fg);border:1px solid var(--bd);border-radius:10px;padding:10px;min-height:340px;white-space:pre;overflow:auto}
+.help{background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;font-size:13px;margin:10px 0}
+.help code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+.err{color:var(--no);font-size:13px;white-space:pre-wrap;margin:8px 0}
+.sel{color:var(--ok);font-size:13px;margin:8px 0}
+</style></head><body>
+<div id="start">
+<h1>Cümle kur: lego oyunu</h1>
+<div class="mu">Karışık blokları doğru sıraya diz, cümleyi kontrol et.</div>
+<div class="help"><code>Özne + (Kip+Fiil) + Nesne + Yer Tümleci + Zarf Tümleci</code></div>
+<div class="mu" style="margin-top:14px">Seviye</div><div class="chips" id="cl"></div>
+<div class="mu">Cümle türü</div><div class="chips" id="ct"></div>
+<div class="acts"><button class="go" id="play">Başla (10 soru)</button><button id="pb">Cümle havuzu</button></div>
+<div class="err" id="sm"></div>
+</div>
+<div id="ps" class="hide">
+<h1>Cümle havuzu</h1>
+<div class="mu">Her satır bir cümle. Düzenle, sil ya da yeni satır ekle, sonra Kaydet’e bas.</div>
+<div class="help">Satır biçimi: <code>A1 Olumlu: sShe|kdrinks|otea|zevery morning</code><br>
+Seviye: <code>A1</code> veya <code>A2</code>. Tür: <code>Olumlu</code>, <code>Olumsuz</code>, <code>Soru</code>, <code>İsim</code>. Bloklar <code>|</code> ile ayrılır, her bloğun ilk harfi görevini gösterir:<br>
+<code>s</code> özne · <code>k</code> kip + fiil (<code>will always teach</code>, <code>does not work</code>, <code>is</code>) · <code>o</code> nesne · <code>c</code> tamamlayıcı (be’den sonra) · <code>y</code> yer tümleci · <code>z</code> zarf tümleci (tarz, zaman, sıklık dışı zarflar)<br>
+Sorularda kip ve fiil ayrılır: <code>a</code> kip (<code>Does</code>), <code>v</code> fiil (<code>work</code>), <code>q</code> soru kelimesi. Örnek: <code>A1 Soru: qWhere|adoes|sshe|vwork</code><br>
+Bloklar doğru sırada yazılmalı; oyun bu sırayı doğru kabul eder. İlk harf büyütme ve noktalama otomatik eklenir. <code>#</code> ile başlayan satırlar yok sayılır.</div>
+<textarea id="ta" wrap="off" spellcheck="false"></textarea>
+<div class="sel" id="pok"></div><div class="err" id="pe"></div>
+<div class="mu" id="pc"></div>
+<div class="acts" style="margin-top:10px"><button class="go" id="psv">Kaydet</button><button id="prs">Varsayılana dön</button><button id="pbk">Geri</button></div>
+</div>
+<div id="game" class="hide">
+<div class="hd"><span id="qn"></span><span>Puan: <b id="sc">0</b></span><span>Seri: <b id="st">0</b></span></div>
+<div class="bar"><div id="pg"></div></div>
+<div class="mu" style="margin-bottom:6px">Cümlen</div>
+<div class="zone" id="zone"></div>
+<div class="mu">Bloklar</div>
+<div class="pool" id="pool"></div>
+<div class="acts">
+<button class="go" id="chk" disabled>Cümleyi kontrol et</button>
+<button id="nx" class="go hide">Sonraki</button>
+<button id="clr">Temizle</button>
+<button id="rs">Baştan başla</button><button id="mn2">Ana menü</button>
+<button id="hint">İpucu (etiketler)</button>
+</div>
+<div class="msg" id="msg">Bloklara dokunarak cümleye ekle. Eklediğin bloğa tekrar dokunursan geri döner.</div>
+</div>
+<div id="end" class="hide">
+<h1>Oyun bitti</h1>
+<div class="big" id="fs"></div>
+<div class="mu" id="fd"></div>
+<div class="acts" style="margin-top:16px"><button class="go" id="again">Baştan başla</button><button id="menu">Ana menü</button></div>
+</div>
+<script>
+var D=[
+[0,1,`sI|klike|ocats
+sShe|kdrinks|otea|zevery morning
+sHe|kplays|ofootball|yin the park|zon Sunday
+sWe|klive|yin Ankara
+sThey|kwork|yin a bank
+sI|keat|obreakfast|yat home|zat 8 o’clock
+sMy mother|kcooks|odinner|zevery evening
+sThe children|kplay|yin the garden
+sHe|kreads|oa book|yin bed|zevery night
+sI|kwatch|oTV|zin the evening
+sShe|kwalks|yto school|zevery day
+sWe|kstudy|oEnglish|yat school|zon Monday
+sMy father|kdrives|oa bus
+sThe dog|ksleeps|yon the sofa
+sI|kwash|omy hands|zbefore lunch
+sHe|kspeaks|oEnglish|zwell
+sShe|ksings|oa song|yat the party|zbeautifully
+sThey|kplay|otennis|zon Saturday
+sI|kget up|zat 7 o’clock
+sThe bus|kstops|yat the corner
+sWe|keat|olunch|yat school|zat 12 o’clock
+sBirds|kfly|yin the sky
+sMy brother|kruns|zfast
+sI|kdrink|omilk|zevery day
+sShe|kopens|othe window|zin the morning
+sThe teacher|kwrites|oa word|yon the board
+sWe|kvisit|omy grandmother|zon Sundays
+sHe|kbuys|obread|yat the market|zevery Friday
+sI|klisten to|omusic|yin my room
+sThey|kcome|yfrom Turkey`],
+[0,2,`sI|kvisited|omy aunt|zyesterday
+sShe|kwatched|oa film|yat the cinema|zlast night
+sWe|kplayed|ofootball|yin the garden|zyesterday
+sHe|kcooked|odinner|zwell last Sunday
+sThey|ktravelled|yto Istanbul|zlast summer
+sI|kcalled|omy friend|zthis morning
+sShe|kstudied|oMath|zall evening
+sHe|kwent|yto the market|zyesterday
+sWe|kate|opizza|yat a restaurant|zon Friday
+sMy sister|kbought|oa new dress|zlast week
+sI|ksaw|oa big dog|yin the street
+sThe baby|kslept|zquietly all night
+sShe|kwill call|omy mother|ztomorrow
+sWe|kwill visit|oour uncle|zon Saturday
+sI|kwill cook|odinner|ztonight
+sHe|kwill travel|yto London|znext year
+sThey|kwill play|otennis|ztomorrow
+sI|kcan swim|zwell
+sShe|kcan speak|oEnglish
+sHe|kcan drive|oa car
+sWe|kcan help|oyou|znow
+sYou|kmust wear|oa coat|zin winter
+sI|kalways do|omy homework|yat home
+sShe|kusually walks|yto work
+sHe|koften plays|ochess|yin the club
+sWe|knever eat|omeat|zon Fridays
+sThey|ksometimes go|yto the cinema|zon Sundays
+sMy father|kalways reads|othe news|zin the morning
+sYou|kshould drink|owater|zevery day
+sHe|kwrote|oa long letter|zlast week`],
+[1,1,`sI|kdo not like|ofish
+sShe|kdoes not drink|ocoffee
+sHe|kdoes not work|zon Sundays
+sWe|kdo not live|yin Izmir
+sThey|kdo not play|ofootball|yat school
+sMy dog|kdoes not eat|ofish
+sI|kdo not watch|oTV|zin the morning
+sShe|kdoes not speak|oFrench
+sThe bus|kdoes not stop|yhere
+sWe|kdo not have|oclass|zon Sunday
+sHe|kdoes not get up|zearly
+sThey|kdo not come|yto school|zon Saturday
+sI|kdo not drink|otea|zat night
+sMy mother|kdoes not cook|omeat
+sThe children|kdo not sleep|zin the afternoon
+sShe|kdoes not like|ospiders
+sWe|kdo not eat|ocake|zevery day
+sHe|kdoes not read|obooks|yin bed
+sI|kdo not listen to|oradio
+sThey|kdo not live|yin Ankara`],
+[1,2,`sI|kdid not see|oher|zyesterday
+sShe|kdid not call|ome|zlast night
+sHe|kdid not go|yto school|ztoday
+sWe|kdid not play|ofootball|zlast Sunday
+sThey|kdid not travel|yto Rome|zlast year
+sI|kdid not sleep|zwell last night
+sMy mother|kdid not cook|odinner|zyesterday
+sThe students|kdid not write|oa test|ztoday
+sShe|kwill not come|yto the party|ztomorrow
+sI|kwill not buy|oa phone|znext month
+sHe|kwill not work|zon Monday
+sWe|kwill not travel|zin July
+sThey|kwill not play|ztonight
+sI|kcan not swim
+sShe|kcan not drive|oa bus
+sHe|kcan not speak|oGerman
+sYou|kmust not run|yin the hall
+sWe|kcan not hear|oyou
+sThe baby|kdid not cry|zlast night
+sShe|kwill not forget|oyour name`],
+[2,1,`aDo|syou|vlike|ocoffee
+aDoes|sshe|vwork|yin a bank
+qWhere|ado|syou|vlive
+qWhat|adoes|sshe|vdrink|zevery morning
+aDo|sthey|vplay|ofootball|zon Sunday
+qWhen|adoes|sthe bus|vcome
+aDoes|sshe|vspeak|oEnglish
+qWhat|ado|syou|veat|zin the morning
+qWhere|adoes|sshe|vwork
+aDo|swe|vhave|oEnglish|zon Monday
+qWhat|adoes|she|vread|yin bed
+aDo|sthey|vlive|yin Ankara
+qWhen|ado|syou|vget up
+aDoes|sthe dog|vsleep|yon the sofa
+qWhat|ado|syou|vwatch|zin the evening
+aDo|syou|vplay|otennis
+qWhere|ado|sthey|vplay|ofootball
+aDoes|sshe|vlike|omusic
+qWhat|adoes|syour father|vdrive
+aDo|sthe children|vsleep|zat 9 o’clock
+qWhat time|adoes|sthe lesson|vstart
+aDoes|she|vcook|odinner
+qWhere|adoes|sMr Brown|vwork
+aDo|swe|vhave|ohomework|ztoday
+qWhat|ado|syou|vdrink|zat night`],
+[2,2,`aDid|syou|vsee|othe film|zlast night
+qWhere|adid|syou|vgo|zyesterday
+qWhat|adid|she|vbuy|yat the market
+aDid|sshe|vcall|oyou|zthis morning
+qWhen|adid|sthey|vtravel|yto Rome
+aDid|she|vcook|odinner|zlast night
+qWhat|adid|syou|veat|zyesterday
+aDid|sthe baby|vsleep|zwell
+qWhere|adid|swe|vput|omy keys
+aDid|sthey|vplay|ofootball|zon Sunday
+aWill|syou|vcome|yto the party|ztomorrow
+qWhen|awill|sshe|vcall|oyou
+qWhat|awill|syou|vcook|ztonight
+aWill|she|vtravel|yto London|znext year
+qWhere|awill|swe|vmeet|ztomorrow
+aWill|sthey|vbring|ofood
+aCan|syou|vswim
+aCan|sshe|vspeak|oEnglish
+qWhat|acan|swe|vdo|znow
+aCan|sI|vopen|othe window
+aCan|syou|vhelp|ome
+qHow|acan|sI|vget|yto the station
+aShould|sI|vcall|ohim|znow
+qWhy|adid|sshe|vleave|zearly
+aMust|sI|vwear|oa coat`],
+[3,1,`sI|kam|ca student
+sShe|kis|ca teacher
+sHe|kis|ctall
+sWe|kare|chappy
+sThey|kare|cat home
+sIt|kis|ca cat
+sMy name|kis|cAli
+sThe book|kis|con the table
+sYou|kare|cmy friend
+sI|kam|chungry
+sThe boys|kare|cin the garden
+sMy mother|kis|cat work
+sThis|kis|cmy bag
+sShe|kis|c12 years old
+sThe apple|kis|cred
+sHe|kis not|ca doctor
+sI|kam not|ctired
+sThey|kare not|cat school
+sWe|kare not|chungry
+sIt|kis not|ccold|ztoday
+aIs|sshe|ca teacher
+aAre|syou|ca student
+aIs|sshe|chappy
+qWhere|ais|sthe bag
+qWhere|aare|syour friends
+qWho|ais|sshe
+qWhat|ais|syour name
+qHow old|aare|syou
+aAre|sthey|cat home
+aIs|sit|ccold|ztoday`],
+[3,2,`sI|kwas|ctired|zyesterday
+sShe|kwas|cat home|zlast night
+sThe film|kwas|cgood
+sWe|kwere|cin Izmir|zlast summer
+sThey|kwere|chappy
+sHe|kwas not|chere|zyesterday
+sThe shops|kwere not|copen|zon Sunday
+sI|kwas not|cready
+sShe|kwill be|cat home|ztonight
+sHe|kwill be|clate
+sWe|kwill be|cin London|znext week
+sThey|kwill not be|chere|ztomorrow
+sIt|kwill be|csunny|ztomorrow
+aWas|sshe|cat school|zyesterday
+aWere|syou|cat home|zlast night
+qWhere|awas|syour bag|zyesterday
+qHow|awas|sthe film
+aWill|syou|vbe|cat home|ztonight
+qWhere|awill|syou|vbe|ztomorrow
+sThey|kwere|cin the garden|zthis morning`]
+];
+var R={s:["Özne","#185FA5"],k:["Kip + Fiil","#993C1D"],a:["Kip","#854F0B"],v:["Fiil","#993C1D"],o:["Nesne","#0F6E56"],c:["Tamamlayıcı","#0F6E56"],y:["Yer Tümleci","#534AB7"],z:["Zarf Tümleci","#3B6D11"],q:["Soru kelimesi","#5F5E5A"]};
+var TN=["Olumlu","Olumsuz","Soru","İsim"],KEY="lego-pool-v2",DEF=[],all=[];
+D.forEach(function(d){d[2].split("\n").forEach(function(x){DEF.push({t:d[0],l:d[1],b:x.split("|")})})});
+function toText(L){return L.map(function(e){return"A"+e.l+" "+TN[e.t]+": "+e.b.join("|")}).join("\n")}
+function parse(text){var L=[],err=[];
+text.split("\n").forEach(function(ln,i){ln=ln.trim();if(!ln||ln.charAt(0)=="#")return;
+var m=ln.match(/^A([12])\s+(Olumlu|Olumsuz|Soru|İsim|Isim)\s*:\s*(.+)$/);
+if(!m){err.push("Satır "+(i+1)+": biçim hatalı (A1/A2, tür ve : kontrol et)");return}
+var b=m[3].split("|").map(function(x){return x.trim()}),bad=false;
+b.forEach(function(x){if(x.length<2||!R[x.charAt(0)])bad=true});
+if(bad||b.length<2){err.push("Satır "+(i+1)+": blok görev harfi (s,k,a,v,o,c,y,z,q) eksik ya da yanlış");return}
+L.push({t:m[2]=="Olumlu"?0:m[2]=="Olumsuz"?1:m[2]=="Soru"?2:3,l:+m[1],b:b})});
+return{list:L,err:err}}
+(function(){var s=null;try{s=localStorage.getItem(KEY)}catch(e){}
+var p=s?parse(s):null;all=(p&&!p.err.length&&p.list.length)?p.list:DEF.slice()})();
+var $=function(i){return document.getElementById(i)};
+var lv=0,tp=-1,Q=[],qi=0,score=0,streak=0,best=0,wrong=0,hinted=false,done=false,cur,placed,items,perfect=0;
+function chips(id,arr,set){var el=$(id);arr.forEach(function(n,i){var b=document.createElement("button");b.textContent=n;if(!i)b.className="on";b.onclick=function(){set(i);el.querySelectorAll("button").forEach(function(x,k){x.className=k==i?"on":""})};el.appendChild(b)})}
+chips("cl",["Hepsi","A1","A2"],function(i){lv=i});
+chips("ct",["Hepsi","Olumlu","Olumsuz","Soru","İsim cümlesi"],function(i){tp=i-1});
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function txt(x,j){var t=x.slice(1);return(j==0&&t!=="I")?t.charAt(0).toLowerCase()+t.slice(1):t}
+function sentence(b){var q=/^[qa]/.test(b[0]);var s=b.map(function(x){return x.slice(1)}).join(" ");return s.charAt(0).toUpperCase()+s.slice(1)+(q?"?":".")}
+function start(){
+var L=all.filter(function(e){return(!lv||e.l==lv)&&(tp<0||e.t==tp)});
+if(!L.length){$("sm").textContent="Bu seçime uygun cümle yok. Cümle havuzuna ekleme yapabilirsin.";return}
+$("sm").textContent="";
+Q=shuffle(L).slice(0,10);qi=0;score=0;streak=0;best=0;perfect=0;
+$("start").className="hide";$("end").className="hide";$("game").className="";load()}
+function load(){
+cur=Q[qi];done=false;wrong=0;hinted=false;placed=[];
+var arr=cur.b.map(function(x,j){return{id:j,r:x.charAt(0),t:txt(x,j)}});
+var sh=shuffle(arr),k=0;
+while(k<20&&sh.every(function(it,i){return it.t===arr[i].t})&&arr.length>1){sh=shuffle(arr);k++}
+items=sh;
+$("qn").textContent="Soru "+(qi+1)+" / "+Q.length;
+$("sc").textContent=score;$("st").textContent=streak;
+$("pg").style.width=(qi/Q.length*100)+"%";
+$("nx").className="go hide";$("chk").className="go";$("clr").className="";
+$("hint").className="";$("hint").textContent="İpucu (etiketler)";
+$("pool").parentNode.className="";
+$("msg").className="msg";$("msg").textContent="Bloklara dokunarak cümleye ekle. Eklediğin bloğa tekrar dokunursan geri döner.";
+draw([])}
+function mk(it,mark){var b=document.createElement("button");b.className="b"+(mark?" "+mark:"");b.style.setProperty("--c",R[it.r][1]);b.innerHTML="<i>"+R[it.r][0]+"</i>"+it.t;return b}
+function draw(marks){
+var z=$("zone"),p=$("pool");z.innerHTML="";p.innerHTML="";
+if(!placed.length){z.innerHTML='<span class="ph">Blokları buraya diz</span>'}
+placed.forEach(function(id,i){var it=items.filter(function(x){return x.id==id})[0];var b=mk(it,marks[i]);b.onclick=function(){if(done)return;placed.splice(i,1);draw([])};z.appendChild(b)});
+items.forEach(function(it){if(placed.indexOf(it.id)>-1)return;var b=mk(it);b.onclick=function(){if(done)return;placed.push(it.id);draw([])};p.appendChild(b)});
+$("chk").disabled=done||placed.length!=items.length;
+var c=$("game");c.className=hinted?"":"nl"}
+function expected(){return cur.b.map(function(x,j){return txt(x,j)})}
+function check(){
+var ex=expected();var got=placed.map(function(id){return items.filter(function(x){return x.id==id})[0].t});
+var marks=got.map(function(t,i){return t===ex[i]?"ok":"no"});
+var right=marks.filter(function(m){return m=="ok"}).length;
+if(right==ex.length){
+var pts=Math.max(10-3*wrong-(hinted?2:0),1);score+=pts;streak++;if(!wrong&&!hinted)perfect++;
+finish(marks,"good","Doğru! +"+pts+" puan. "+sentence(cur.b))}
+else{wrong++;streak=0;
+if(wrong>=3){placed=items.slice().sort(function(a,b){return a.id-b.id}).map(function(x){return x.id});
+finish(placed.map(function(){return"ok"}),"bad","Doğru cevap: "+sentence(cur.b))}
+else{draw(marks);$("st").textContent=streak;$("msg").className="msg bad";$("msg").textContent=right+" / "+ex.length+" blok doğru yerde (yeşil). Kırmızı olanları yerlerinden çıkarıp tekrar dene. Kalan hak: "+(3-wrong)}}}
+function finish(marks,cls,m){done=true;draw(marks);$("sc").textContent=score;$("st").textContent=streak;$("pg").style.width=((qi+1)/Q.length*100)+"%";
+$("msg").className="msg "+cls;$("msg").textContent=m;
+$("chk").className="go hide";$("nx").className="go";$("nx").textContent=qi+1>=Q.length?"Sonucu gör":"Sonraki"}
+$("chk").onclick=check;
+$("nx").onclick=function(){qi++;if(qi>=Q.length)over();else load()};
+$("clr").onclick=function(){if(done)return;placed=[];draw([])};
+$("hint").onclick=function(){hinted=true;draw([]);$("hint").textContent="İpucu açık"};
+function over(){$("game").className="hide";$("end").className="";
+$("fs").textContent=score+" / "+(Q.length*10)+" puan";
+$("fd").textContent="İlk denemede hatasız ve ipucusuz doğru: "+perfect+" / "+Q.length}
+function pinfo(){$("pc").textContent="Havuzda "+all.length+" cümle var."}
+$("pb").onclick=function(){$("start").className="hide";$("ps").className="";$("ta").value=toText(all);$("pe").textContent="";$("pok").textContent="";pinfo()};
+$("pbk").onclick=function(){$("ps").className="hide";$("start").className=""};
+$("psv").onclick=function(){var p=parse($("ta").value);$("pok").textContent="";
+if(p.err.length){$("pe").textContent=p.err.slice(0,8).join("\n")+(p.err.length>8?"\n… ve "+(p.err.length-8)+" hata daha":"");return}
+if(!p.list.length){$("pe").textContent="En az bir cümle olmalı.";return}
+$("pe").textContent="";all=p.list;var ok=true;try{localStorage.setItem(KEY,$("ta").value)}catch(e){ok=false}
+$("pok").textContent="Kaydedildi: "+all.length+" cümle."+(ok?"":" (Bu tarayıcı kalıcı saklamayı engelliyor; sayfa yenilenince eski havuz döner.)");pinfo()};
+$("prs").onclick=function(){all=DEF.slice();$("ta").value=toText(all);try{localStorage.removeItem(KEY)}catch(e){}
+$("pe").textContent="";$("pok").textContent="Varsayılan 200 cümle geri yüklendi.";pinfo()};
+$("rs").onclick=start;
+$("mn2").onclick=function(){$("game").className="hide";$("start").className=""};
+$("play").onclick=start;$("again").onclick=start;
+$("menu").onclick=function(){$("end").className="hide";$("start").className=""};
+</script></body></html>
